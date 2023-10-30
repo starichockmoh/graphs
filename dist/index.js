@@ -7,6 +7,7 @@ var graph_1 = __importDefault(require("./graphs/graph"));
 var graph_json_1 = __importDefault(require("./graph.json"));
 var orientGraph_json_1 = __importDefault(require("./orientGraph.json"));
 var traversals_1 = __importDefault(require("./traversals"));
+var kruskal_1 = require("./kruskal");
 console.log('//////////////////////Неориентированный граф/////////////////////////////');
 var graph = new graph_1.default();
 var vertices = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -70,6 +71,8 @@ var rl = readline.createInterface({
 console.log('//////////////////////Обходы графов/////////////////////////////');
 console.log(traversals_1.default.resultDeepSearch);
 console.log(traversals_1.default.resultWidthSearch);
+console.log('//////////////////////Краскал/////////////////////////////');
+kruskal_1.tree.print();
 console.log('Создать граф: create, создать ориентированный граф createOrient, добавить вершину: vertex, добавить ребро: edge, ' +
     'вывести на экран: print, write: вывести в файл, degree - вывести степень полуисходов, loops - вывести количество петель');
 var isVertex = false;

@@ -1,10 +1,17 @@
 import * as fs from 'fs';
+import DisjointSet from './set';
 
 type KeyType = string | number;
 type VertexItemType = {
   weight: number;
   value: KeyType;
 };
+
+export interface IEdge {
+  weight: number;
+  from: KeyType;
+  to: KeyType;
+}
 
 export type IVertex = {
   [key in KeyType]: Array<VertexItemType>;
@@ -24,11 +31,19 @@ export default class Graph {
   }
 
   public getAllVertices() {
-    return Object.values(this.vertices);
+    return Object.keys(this.vertices);
   }
 
   public getAllEdges() {
-    return Object.values(this.vertices);
+    return Object.entries(this.vertices)
+      .map(([key, value]) =>
+        value.map((v) => ({
+          weight: v.weight,
+          from: key,
+          to: v.value,
+        })),
+      )
+      .flat() as Array<IEdge>;
   }
 
   public getIsOrient() {
@@ -243,27 +258,54 @@ export default class Graph {
       if (deletedIndex !== -1) this.vertices[vertex2].splice(deletedIndex, 1);
     }
   }
+
+  public kruskal() {
+    if (this.getIsOrient()) {
+      throw new Error('Граф ориентированный!');
+    }
+    const minimumSpanningTree = new Graph();
+    const sortingCallbacks = {
+      compareCallback: (graphEdgeA: IEdge, graphEdgeB: IEdge) => {
+        if (graphEdgeA.weight === graphEdgeB.weight) return 1;
+        return graphEdgeA.weight <= graphEdgeB.weight ? -1 : 1;
+      },
+    };
+    const sortedEdges = this.getAllEdges().sort(
+      sortingCallbacks.compareCallback,
+    );
+    const keyCallback = (graphVertex: KeyType) => graphVertex;
+    const disjointSet = new DisjointSet(keyCallback);
+    this.getAllVertices().forEach((graphVertex) => {
+      disjointSet.makeSet(graphVertex);
+    });
+    for (let edgeIndex = 0; edgeIndex < sortedEdges.length; edgeIndex += 1) {
+      const currentEdge = sortedEdges[edgeIndex];
+      if (!disjointSet.inSameSet(currentEdge.from, currentEdge.to)) {
+        disjointSet.union(currentEdge.from, currentEdge.to);
+        minimumSpanningTree.addVertex(currentEdge.from);
+        minimumSpanningTree.addVertex(currentEdge.to);
+        minimumSpanningTree.addEdge(
+          currentEdge.from,
+          currentEdge.to,
+          currentEdge.weight,
+        );
+      }
+    }
+    return minimumSpanningTree;
+  }
 }
 
 // export function kruskal(graph: Graph) {
-//   // It should fire error if graph is directed since the algorithm works only
-//   // for undirected graphs.
 //   if (graph.getIsOrient()) {
-//     throw new Error("Kruskal's algorithms works only for undirected graphs");
+//     throw new Error("Граф ориентированный!");
 //   }
 //
-//   // Init new graph that will contain minimum spanning tree of original graph.
 //   const minimumSpanningTree = new Graph();
 //
-//   // Sort all graph edges in increasing order.
 //   const sortingCallbacks = {
-//     /**
-//      * @param {GraphEdge} graphEdgeA
-//      * @param {GraphEdge} graphEdgeB
-//      */
 //     compareCallback: (
-//       graphEdgeA: VertexItemType,
-//       graphEdgeB: VertexItemType,
+//       graphEdgeA: IEdge,
+//       graphEdgeB: IEdge,
 //     ) => {
 //       if (graphEdgeA.weight === graphEdgeB.weight) {
 //         return 1;
@@ -272,33 +314,22 @@ export default class Graph {
 //       return graphEdgeA.weight <= graphEdgeB.weight ? -1 : 1;
 //     },
 //   };
-//   const sortedEdges = new QuickSort(sortingCallbacks).sort(graph.getAllEdges());
+//   const sortedEdges = graph.getAllEdges().sort(sortingCallbacks.compareCallback);
 //
-//   // Create disjoint sets for all graph vertices.
-//   const keyCallback = (graphVertex) => graphVertex.getKey();
+//   const keyCallback = (graphVertex: KeyType) => graphVertex;
 //   const disjointSet = new DisjointSet(keyCallback);
 //
 //   graph.getAllVertices().forEach((graphVertex) => {
 //     disjointSet.makeSet(graphVertex);
 //   });
 //
-//   // Go through all edges started from the minimum one and try to add them
-//   // to minimum spanning tree. The criteria of adding the edge would be whether
-//   // it is forms the cycle or not (if it connects two vertices from one disjoint
-//   // set or not).
 //   for (let edgeIndex = 0; edgeIndex < sortedEdges.length; edgeIndex += 1) {
-//     /** @var {GraphEdge} currentEdge */
 //     const currentEdge = sortedEdges[edgeIndex];
-//
-//     // Check if edge forms the cycle. If it does then skip it.
 //     if (
-//       !disjointSet.inSameSet(currentEdge.startVertex, currentEdge.endVertex)
+//       !disjointSet.inSameSet(currentEdge.from, currentEdge.to)
 //     ) {
-//       // Unite two subsets into one.
-//       disjointSet.union(currentEdge.startVertex, currentEdge.endVertex);
-//
-//       // Add this edge to spanning tree.
-//       minimumSpanningTree.addEdge(currentEdge);
+//       disjointSet.union(currentEdge.from, currentEdge.to);
+//       minimumSpanningTree.addEdge(currentEdge.from, currentEdge.to, currentEdge.weight);
 //     }
 //   }
 //

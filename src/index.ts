@@ -2,6 +2,7 @@ import Graph from './graphs/graph';
 import JSONGraph from './graph.json';
 import JSONOrientGraph from './orientGraph.json';
 import Traversals from './traversals';
+import { tree } from './kruskal';
 
 console.log(
   '//////////////////////Неориентированный граф/////////////////////////////',
@@ -103,6 +104,9 @@ let rl = readline.createInterface({
 console.log('//////////////////////Обходы графов/////////////////////////////');
 console.log(Traversals.resultDeepSearch);
 console.log(Traversals.resultWidthSearch);
+
+console.log('//////////////////////Краскал/////////////////////////////');
+tree.print();
 
 console.log(
   'Создать граф: create, создать ориентированный граф createOrient, добавить вершину: vertex, добавить ребро: edge, ' +

@@ -31,8 +31,12 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = __importStar(require("fs"));
+var set_1 = __importDefault(require("./set"));
 var Graph = /** @class */ (function () {
     function Graph(isOrient, vertices) {
         this.vertices = vertices !== null && vertices !== void 0 ? vertices : {};
@@ -43,10 +47,19 @@ var Graph = /** @class */ (function () {
         this.vertices = graph.vertices;
     };
     Graph.prototype.getAllVertices = function () {
-        return Object.values(this.vertices);
+        return Object.keys(this.vertices);
     };
     Graph.prototype.getAllEdges = function () {
-        return Object.values(this.vertices);
+        return Object.entries(this.vertices)
+            .map(function (_a) {
+            var key = _a[0], value = _a[1];
+            return value.map(function (v) { return ({
+                weight: v.weight,
+                from: key,
+                to: v.value,
+            }); });
+        })
+            .flat();
     };
     Graph.prototype.getIsOrient = function () {
         return this.isOrient;
@@ -231,28 +244,51 @@ var Graph = /** @class */ (function () {
                 this.vertices[vertex2].splice(deletedIndex, 1);
         }
     };
+    Graph.prototype.kruskal = function () {
+        if (this.getIsOrient()) {
+            throw new Error('Граф ориентированный!');
+        }
+        var minimumSpanningTree = new Graph();
+        var sortingCallbacks = {
+            compareCallback: function (graphEdgeA, graphEdgeB) {
+                if (graphEdgeA.weight === graphEdgeB.weight)
+                    return 1;
+                return graphEdgeA.weight <= graphEdgeB.weight ? -1 : 1;
+            },
+        };
+        var sortedEdges = this.getAllEdges().sort(sortingCallbacks.compareCallback);
+        var keyCallback = function (graphVertex) { return graphVertex; };
+        var disjointSet = new set_1.default(keyCallback);
+        this.getAllVertices().forEach(function (graphVertex) {
+            disjointSet.makeSet(graphVertex);
+        });
+        // @ts-ignore
+        console.log(disjointSet.items);
+        for (var edgeIndex = 0; edgeIndex < sortedEdges.length; edgeIndex += 1) {
+            var currentEdge = sortedEdges[edgeIndex];
+            if (!disjointSet.inSameSet(currentEdge.from, currentEdge.to)) {
+                disjointSet.union(currentEdge.from, currentEdge.to);
+                minimumSpanningTree.addVertex(currentEdge.from);
+                minimumSpanningTree.addVertex(currentEdge.to);
+                minimumSpanningTree.addEdge(currentEdge.from, currentEdge.to, currentEdge.weight);
+            }
+        }
+        return minimumSpanningTree;
+    };
     return Graph;
 }());
 exports.default = Graph;
 // export function kruskal(graph: Graph) {
-//   // It should fire error if graph is directed since the algorithm works only
-//   // for undirected graphs.
 //   if (graph.getIsOrient()) {
-//     throw new Error("Kruskal's algorithms works only for undirected graphs");
+//     throw new Error("Граф ориентированный!");
 //   }
 //
-//   // Init new graph that will contain minimum spanning tree of original graph.
 //   const minimumSpanningTree = new Graph();
 //
-//   // Sort all graph edges in increasing order.
 //   const sortingCallbacks = {
-//     /**
-//      * @param {GraphEdge} graphEdgeA
-//      * @param {GraphEdge} graphEdgeB
-//      */
 //     compareCallback: (
-//       graphEdgeA: VertexItemType,
-//       graphEdgeB: VertexItemType,
+//       graphEdgeA: IEdge,
+//       graphEdgeB: IEdge,
 //     ) => {
 //       if (graphEdgeA.weight === graphEdgeB.weight) {
 //         return 1;
@@ -261,33 +297,22 @@ exports.default = Graph;
 //       return graphEdgeA.weight <= graphEdgeB.weight ? -1 : 1;
 //     },
 //   };
-//   const sortedEdges = new QuickSort(sortingCallbacks).sort(graph.getAllEdges());
+//   const sortedEdges = graph.getAllEdges().sort(sortingCallbacks.compareCallback);
 //
-//   // Create disjoint sets for all graph vertices.
-//   const keyCallback = (graphVertex) => graphVertex.getKey();
+//   const keyCallback = (graphVertex: KeyType) => graphVertex;
 //   const disjointSet = new DisjointSet(keyCallback);
 //
 //   graph.getAllVertices().forEach((graphVertex) => {
 //     disjointSet.makeSet(graphVertex);
 //   });
 //
-//   // Go through all edges started from the minimum one and try to add them
-//   // to minimum spanning tree. The criteria of adding the edge would be whether
-//   // it is forms the cycle or not (if it connects two vertices from one disjoint
-//   // set or not).
 //   for (let edgeIndex = 0; edgeIndex < sortedEdges.length; edgeIndex += 1) {
-//     /** @var {GraphEdge} currentEdge */
 //     const currentEdge = sortedEdges[edgeIndex];
-//
-//     // Check if edge forms the cycle. If it does then skip it.
 //     if (
-//       !disjointSet.inSameSet(currentEdge.startVertex, currentEdge.endVertex)
+//       !disjointSet.inSameSet(currentEdge.from, currentEdge.to)
 //     ) {
-//       // Unite two subsets into one.
-//       disjointSet.union(currentEdge.startVertex, currentEdge.endVertex);
-//
-//       // Add this edge to spanning tree.
-//       minimumSpanningTree.addEdge(currentEdge);
+//       disjointSet.union(currentEdge.from, currentEdge.to);
+//       minimumSpanningTree.addEdge(currentEdge.from, currentEdge.to, currentEdge.weight);
 //     }
 //   }
 //
