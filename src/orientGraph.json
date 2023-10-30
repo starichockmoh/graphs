@@ -1,0 +1,45 @@
+{
+  "isOrient": true,
+  "vertices": {
+    "A": [
+      {
+        "value": "B",
+        "weight": 0
+      },
+      {
+        "value": "C",
+        "weight": 0
+      },
+      {
+        "value": "F",
+        "weight": 0
+      }
+    ],
+    "B": [],
+    "C": [
+      {
+        "value": "D",
+        "weight": 0
+      },
+      {
+        "value": "E",
+        "weight": 0
+      }
+    ],
+    "D": [
+      {
+        "value": "C",
+        "weight": 0
+      }
+    ],
+    "E": [],
+    "F": [
+      {
+        "value": "G",
+        "weight": 0
+      }
+    ],
+    "G": [],
+    "H": []
+  }
+}

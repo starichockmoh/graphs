@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "lib": ["es6", "dom", "es2017"],
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es5",
+    "baseUrl": "src",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "resolveJsonModule": true
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,68 @@
+{
+    "isOrient": false,
+    "vertices": {
+        "A": [
+            {
+                "value": "B",
+                "weight": 0
+            },
+            {
+                "value": "C",
+                "weight": 0
+            },
+            {
+                "value": "F",
+                "weight": 0
+            }
+        ],
+        "B": [
+            {
+                "value": "A",
+                "weight": 0
+            }
+        ],
+        "C": [
+            {
+                "value": "A",
+                "weight": 0
+            },
+            {
+                "value": "D",
+                "weight": 0
+            },
+            {
+                "value": "E",
+                "weight": 0
+            }
+        ],
+        "D": [
+            {
+                "value": "C",
+                "weight": 0
+            }
+        ],
+        "E": [
+            {
+                "value": "C",
+                "weight": 0
+            }
+        ],
+        "F": [
+            {
+                "value": "A",
+                "weight": 0
+            },
+            {
+                "value": "G",
+                "weight": 0
+            }
+        ],
+        "G": [
+            {
+                "value": "F",
+                "weight": 0
+            }
+        ],
+        "H": []
+    }
+}
