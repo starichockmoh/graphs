@@ -37,6 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var fs = __importStar(require("fs"));
 var set_1 = __importDefault(require("./set"));
+var priority_1 = __importDefault(require("./priority"));
 var Graph = /** @class */ (function () {
     function Graph(isOrient, vertices) {
         this.vertices = vertices !== null && vertices !== void 0 ? vertices : {};
@@ -248,6 +249,7 @@ var Graph = /** @class */ (function () {
         if (this.getIsOrient()) {
             throw new Error('Граф ориентированный!');
         }
+        //Инициализировать новый граф, который будет содержать минимальное остовное дерево исходного графа.
         var minimumSpanningTree = new Graph();
         var sortingCallbacks = {
             compareCallback: function (graphEdgeA, graphEdgeB) {
@@ -257,65 +259,199 @@ var Graph = /** @class */ (function () {
             },
         };
         var sortedEdges = this.getAllEdges().sort(sortingCallbacks.compareCallback);
+        //Создайте непересекающиеся множества для всех вершин графа.
         var keyCallback = function (graphVertex) { return graphVertex; };
         var disjointSet = new set_1.default(keyCallback);
         this.getAllVertices().forEach(function (graphVertex) {
             disjointSet.makeSet(graphVertex);
         });
-        // @ts-ignore
-        console.log(disjointSet.items);
+        // Пройдитесь по всем ребрам, начиная с минимального, и попробуйте их добавить.
+        // к минимальному связующему дереву. Критерием добавления ребра будет то, будет ли
+        // образует цикл или нет (если соединяет две вершины из одной непересекающейся
+        // установлено или нет).
         for (var edgeIndex = 0; edgeIndex < sortedEdges.length; edgeIndex += 1) {
             var currentEdge = sortedEdges[edgeIndex];
             if (!disjointSet.inSameSet(currentEdge.from, currentEdge.to)) {
+                // Объедините два подмножества в одно.
                 disjointSet.union(currentEdge.from, currentEdge.to);
                 minimumSpanningTree.addVertex(currentEdge.from);
                 minimumSpanningTree.addVertex(currentEdge.to);
+                //Добавьте это ребро к связующему дереву.
                 minimumSpanningTree.addEdge(currentEdge.from, currentEdge.to, currentEdge.weight);
             }
         }
         return minimumSpanningTree;
     };
+    Graph.prototype.dijkstra = function (startVertex) {
+        // Вспомогательные переменные инициализации, которые нам понадобятся для алгоритма Дейкстры.
+        var distances = {};
+        var visitedVertices = {};
+        var previousVertices = {};
+        var queue = new priority_1.default();
+        // Инициализируем все расстояния с бесконечностью, предполагая, что
+        // в данный момент мы не можем достичь ни одной вершины, кроме начальной.
+        this.getAllVertices().forEach(function (vertex) {
+            distances[vertex] = Infinity;
+            previousVertices[vertex] = null;
+        });
+        // Мы уже находимся в начальной вершине, поэтому расстояние до нее равно нулю.
+        distances[startVertex] = 0;
+        // Инициализация очереди вершин
+        queue.add(startVertex, distances[startVertex]);
+        var _loop_1 = function () {
+            // Получить следующую ближайшую вершину.
+            var currentVertex = queue.poll();
+            // Перебрать каждого непосещенного соседа текущей вершины.
+            this_1.vertices[currentVertex].forEach(function (neighbor) {
+                // Не посещайте уже посещенные вершины.
+                if (!visitedVertices[neighbor.value]) {
+                    // Обновить расстояния до каждого соседа от текущей вершины.
+                    var existingDistanceToNeighbor = distances[neighbor.value];
+                    var distanceToNeighborFromCurrent = distances[currentVertex] + neighbor.weight;
+                    // Если мы нашли более короткий путь к соседу — обновите его.
+                    if (distanceToNeighborFromCurrent < existingDistanceToNeighbor) {
+                        distances[neighbor.value] = distanceToNeighborFromCurrent;
+                        // Изменить приоритет соседа в очереди, так как он мог стать ближе.
+                        if (queue.hasValue(neighbor.value)) {
+                            queue.changePriority(neighbor.value, distances[neighbor.value]);
+                        }
+                        // Запомните предыдущую ближайшую вершину.
+                        previousVertices[neighbor.value] = currentVertex;
+                    }
+                    // Добавьте соседа в очередь для дальнейшего посещения.
+                    if (!queue.hasValue(neighbor.value)) {
+                        queue.add(neighbor.value, distances[neighbor.value]);
+                    }
+                }
+            });
+            // Добавьте текущую вершину к посещенным, чтобы в дальнейшем не посещать ее повторно.
+            visitedVertices[currentVertex] = currentVertex;
+        };
+        var this_1 = this;
+        // Перебирать приоритетную очередь вершин, пока она не станет пустой.
+        while (!queue.isEmpty()) {
+            _loop_1();
+        }
+        // Возвращает набор кратчайших расстояний до всех вершин и набор
+        // кратчайших путей ко всем вершинам графа.
+        return {
+            distances: distances,
+            previousVertices: previousVertices,
+        };
+    };
+    Graph.prototype.bellmanFord = function (startVertex, limit) {
+        var _this = this;
+        var distances = {};
+        var previousVertices = {};
+        // Инициализируем все расстояния с бесконечностью, предполагая,
+        // что в данный момент мы не можем достичь ни одной вершины, кроме начальной.
+        distances[startVertex] = 0;
+        this.getAllVertices().forEach(function (vertex) {
+            previousVertices[vertex] = null;
+            if (vertex !== startVertex) {
+                distances[vertex] = Infinity;
+            }
+        });
+        // Нам понадобится (|V| - 1) итераций.
+        for (var iteration = 0; iteration < this.getAllVertices().length - 1; iteration += 1) {
+            // Во время каждой итерации проходят все вершины.
+            Object.keys(distances).forEach(function (vertex) {
+                // Пройдите через все ребра вершин.
+                _this.vertices[vertex].forEach(function (neighbor) {
+                    // Выясним, меньше ли расстояние до соседа в этой
+                    // итерации, чем в предыдущей.
+                    var distanceToVertex = distances[vertex];
+                    var distanceToNeighbor = distanceToVertex + neighbor.weight;
+                    if (distanceToNeighbor < distances[neighbor.value]) {
+                        distances[neighbor.value] = distanceToNeighbor;
+                        previousVertices[neighbor.value] = vertex;
+                    }
+                });
+            });
+        }
+        var perefery = {};
+        Object.entries(distances).forEach(function (_a) {
+            var key = _a[0], dist = _a[1];
+            if (Number(dist) > limit) {
+                perefery[key] = dist;
+            }
+        });
+        return {
+            distances: distances,
+            previousVertices: previousVertices,
+            perefery: perefery,
+        };
+    };
+    Graph.prototype.floydWarshall = function (v1, v2, L) {
+        var _this = this;
+        var vertices = this.getAllVertices();
+        // Инициализировать матрицу предыдущих вершин с нулями, что означает отсутствие
+        // существуют предыдущие вершины, которые дадут нам кратчайший путь.
+        var nextVertices = Array(vertices.length)
+            .fill(null)
+            .map(function () {
+            return Array(vertices.length).fill(null);
+        });
+        //Начальная матрица расстояний с бесконечностью означает,
+        // что путей между вершинами пока не существует.
+        var distances = Array(vertices.length)
+            .fill(null)
+            .map(function () {
+            return Array(vertices.length).fill(Infinity);
+        });
+        //Инициализируем матрицу расстояний с расстоянием, которое мы уже сейчас (от существующих ребер).
+        //А также инициализировать предыдущие вершины с ребер.
+        vertices.forEach(function (startVertex, startIndex) {
+            vertices.forEach(function (endVertex, endIndex) {
+                if (startVertex === endVertex) {
+                    distances[startIndex][endIndex] = 0;
+                }
+                else {
+                    // Найдите ребро между начальной и конечной вершинами
+                    var edge = _this.vertices[startVertex].find(function (v) { return v.value === endVertex; });
+                    if (edge) {
+                        // Существует ребро от вершины с startIndex до вершины с endIndex.
+                        // Сохраните расстояние и предыдущую вершину.
+                        distances[startIndex][endIndex] = edge.weight;
+                        nextVertices[startIndex][endIndex] = startVertex;
+                    }
+                    else {
+                        distances[startIndex][endIndex] = Infinity;
+                    }
+                }
+            });
+        });
+        // Теперь перейдем к сути алгоритма.
+        // Возьмем все пары вершин (от начала до конца) и попробуем проверить, есть ли там
+        // между ними существует более короткий путь через среднюю вершину. Средняя вершина также может
+        // быть одной из вершин графа. Как вы можете видеть, теперь у нас будет три
+        // циклически проходит по всем вершинам графа: для начальной, конечной и средней вершины.
+        vertices.forEach(function (middleVertex, middleIndex) {
+            // Путь начинается с startVertex с помощью startIndex.
+            vertices.forEach(function (startVertex, startIndex) {
+                // Путь заканчивается на endVertex с помощью endIndex.
+                vertices.forEach(function (endVertex, endIndex) {
+                    // Сравните существующее расстояние от startVertex до endVertex с расстоянием
+                    // от startVertex до endVertex, но через middleVertex.
+                    // Сохраняем кратчайшее расстояние и предыдущую вершину, которая позволяет
+                    // нам нужно это кратчайшее расстояние.
+                    var distViaMiddle = distances[startIndex][middleIndex] +
+                        distances[middleIndex][endIndex];
+                    if (distances[startIndex][endIndex] > distViaMiddle) {
+                        // Мы нашли кратчайший проход через среднюю вершину.
+                        distances[startIndex][endIndex] = distViaMiddle;
+                        nextVertices[startIndex][endIndex] = middleVertex;
+                    }
+                });
+            });
+        });
+        var indexV1 = this.getAllVertices().indexOf(String(v1));
+        var indexV2 = this.getAllVertices().indexOf(String(v2));
+        var dist = distances[indexV1][indexV2];
+        var isExist = dist <= L;
+        return { distances: distances, nextVertices: nextVertices, dist: dist, isExist: isExist };
+    };
     return Graph;
 }());
 exports.default = Graph;
-// export function kruskal(graph: Graph) {
-//   if (graph.getIsOrient()) {
-//     throw new Error("Граф ориентированный!");
-//   }
-//
-//   const minimumSpanningTree = new Graph();
-//
-//   const sortingCallbacks = {
-//     compareCallback: (
-//       graphEdgeA: IEdge,
-//       graphEdgeB: IEdge,
-//     ) => {
-//       if (graphEdgeA.weight === graphEdgeB.weight) {
-//         return 1;
-//       }
-//
-//       return graphEdgeA.weight <= graphEdgeB.weight ? -1 : 1;
-//     },
-//   };
-//   const sortedEdges = graph.getAllEdges().sort(sortingCallbacks.compareCallback);
-//
-//   const keyCallback = (graphVertex: KeyType) => graphVertex;
-//   const disjointSet = new DisjointSet(keyCallback);
-//
-//   graph.getAllVertices().forEach((graphVertex) => {
-//     disjointSet.makeSet(graphVertex);
-//   });
-//
-//   for (let edgeIndex = 0; edgeIndex < sortedEdges.length; edgeIndex += 1) {
-//     const currentEdge = sortedEdges[edgeIndex];
-//     if (
-//       !disjointSet.inSameSet(currentEdge.from, currentEdge.to)
-//     ) {
-//       disjointSet.union(currentEdge.from, currentEdge.to);
-//       minimumSpanningTree.addEdge(currentEdge.from, currentEdge.to, currentEdge.weight);
-//     }
-//   }
-//
-//   return minimumSpanningTree;
-// }
 //# sourceMappingURL=graph.js.map

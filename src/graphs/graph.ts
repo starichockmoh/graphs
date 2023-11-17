@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import DisjointSet from './set';
+import PriorityQueue from './priority';
 
 type KeyType = string | number;
 type VertexItemType = {
@@ -263,6 +264,7 @@ export default class Graph {
     if (this.getIsOrient()) {
       throw new Error('Граф ориентированный!');
     }
+    //Инициализировать новый граф, который будет содержать минимальное остовное дерево исходного графа.
     const minimumSpanningTree = new Graph();
     const sortingCallbacks = {
       compareCallback: (graphEdgeA: IEdge, graphEdgeB: IEdge) => {
@@ -273,17 +275,24 @@ export default class Graph {
     const sortedEdges = this.getAllEdges().sort(
       sortingCallbacks.compareCallback,
     );
+    //Создайте непересекающиеся множества для всех вершин графа.
     const keyCallback = (graphVertex: KeyType) => graphVertex;
     const disjointSet = new DisjointSet(keyCallback);
     this.getAllVertices().forEach((graphVertex) => {
       disjointSet.makeSet(graphVertex);
     });
+    // Пройдитесь по всем ребрам, начиная с минимального, и попробуйте их добавить.
+    // к минимальному связующему дереву. Критерием добавления ребра будет то, будет ли
+    // образует цикл или нет (если соединяет две вершины из одной непересекающейся
+    // установлено или нет).
     for (let edgeIndex = 0; edgeIndex < sortedEdges.length; edgeIndex += 1) {
       const currentEdge = sortedEdges[edgeIndex];
       if (!disjointSet.inSameSet(currentEdge.from, currentEdge.to)) {
+        // Объедините два подмножества в одно.
         disjointSet.union(currentEdge.from, currentEdge.to);
         minimumSpanningTree.addVertex(currentEdge.from);
         minimumSpanningTree.addVertex(currentEdge.to);
+        //Добавьте это ребро к связующему дереву.
         minimumSpanningTree.addEdge(
           currentEdge.from,
           currentEdge.to,
@@ -293,45 +302,206 @@ export default class Graph {
     }
     return minimumSpanningTree;
   }
-}
+  //"На пальцах" примерно так... Алгоритм основан на том, что, грубо говоря, там,
+  // где уже побывали - больше не будем. И что чем дальше идем, тем больший суммарный вес - именно поэтому нам не
+  // нужно возвращаться: ничего лучше, чем есть, уже не будет. А ребра с отрицательным весом эти правила нарушают - может
+  // оказаться, что если воспользоваться ребром с отрицательным весом и вернуться в уже просмотренную вершину, то вес пути
+  // к ней окажется меньше. Что противоречит идее в основе алгоритма. –
+  //В графе с отрицательными весами понятие пути минимального веса может быть не определено.
+  // Это не зависит от алгоритма решающего задачу. Сам граф так (может быть) устроен, что нельзя сказать про какой-то путь -
+  // "это путь минимального веса". Пока это так, никакой алгоритм не может решить задачу, так как он будет искать то чего нет.
+  // Определитесь что такое путь минимального веса в вашем примере, тогда можно будет говорить находит ли конкретный алгоритм именно его.
+  public dijkstra(startVertex: KeyType) {
+    // Вспомогательные переменные инициализации, которые нам понадобятся для алгоритма Дейкстры.
+    const distances = {};
+    const visitedVertices = {};
+    const previousVertices = {};
+    const queue = new PriorityQueue();
 
-// export function kruskal(graph: Graph) {
-//   if (graph.getIsOrient()) {
-//     throw new Error("Граф ориентированный!");
-//   }
-//
-//   const minimumSpanningTree = new Graph();
-//
-//   const sortingCallbacks = {
-//     compareCallback: (
-//       graphEdgeA: IEdge,
-//       graphEdgeB: IEdge,
-//     ) => {
-//       if (graphEdgeA.weight === graphEdgeB.weight) {
-//         return 1;
-//       }
-//
-//       return graphEdgeA.weight <= graphEdgeB.weight ? -1 : 1;
-//     },
-//   };
-//   const sortedEdges = graph.getAllEdges().sort(sortingCallbacks.compareCallback);
-//
-//   const keyCallback = (graphVertex: KeyType) => graphVertex;
-//   const disjointSet = new DisjointSet(keyCallback);
-//
-//   graph.getAllVertices().forEach((graphVertex) => {
-//     disjointSet.makeSet(graphVertex);
-//   });
-//
-//   for (let edgeIndex = 0; edgeIndex < sortedEdges.length; edgeIndex += 1) {
-//     const currentEdge = sortedEdges[edgeIndex];
-//     if (
-//       !disjointSet.inSameSet(currentEdge.from, currentEdge.to)
-//     ) {
-//       disjointSet.union(currentEdge.from, currentEdge.to);
-//       minimumSpanningTree.addEdge(currentEdge.from, currentEdge.to, currentEdge.weight);
-//     }
-//   }
-//
-//   return minimumSpanningTree;
-// }
+    // Инициализируем все расстояния с бесконечностью, предполагая, что
+    // в данный момент мы не можем достичь ни одной вершины, кроме начальной.
+    this.getAllVertices().forEach((vertex) => {
+      distances[vertex] = Infinity;
+      previousVertices[vertex] = null;
+    });
+
+    // Мы уже находимся в начальной вершине, поэтому расстояние до нее равно нулю.
+    distances[startVertex] = 0;
+
+    // Инициализация очереди вершин
+    queue.add(startVertex, distances[startVertex]);
+
+    // Перебирать приоритетную очередь вершин, пока она не станет пустой.
+    while (!queue.isEmpty()) {
+      // Получить следующую ближайшую вершину.
+      const currentVertex = queue.poll();
+
+      // Перебрать каждого непосещенного соседа текущей вершины.
+      this.vertices[currentVertex].forEach((neighbor) => {
+        // Не посещайте уже посещенные вершины.
+        if (!visitedVertices[neighbor.value]) {
+          // Обновить расстояния до каждого соседа от текущей вершины.
+          const existingDistanceToNeighbor = distances[neighbor.value];
+          const distanceToNeighborFromCurrent =
+            distances[currentVertex] + neighbor.weight;
+
+          // Если мы нашли более короткий путь к соседу — обновите его.
+          if (distanceToNeighborFromCurrent < existingDistanceToNeighbor) {
+            distances[neighbor.value] = distanceToNeighborFromCurrent;
+
+            // Изменить приоритет соседа в очереди, так как он мог стать ближе.
+            if (queue.hasValue(neighbor.value)) {
+              queue.changePriority(neighbor.value, distances[neighbor.value]);
+            }
+
+            // Запомните предыдущую ближайшую вершину.
+            previousVertices[neighbor.value] = currentVertex;
+          }
+
+          // Добавьте соседа в очередь для дальнейшего посещения.
+          if (!queue.hasValue(neighbor.value)) {
+            queue.add(neighbor.value, distances[neighbor.value]);
+          }
+        }
+      });
+
+      // Добавьте текущую вершину к посещенным, чтобы в дальнейшем не посещать ее повторно.
+      visitedVertices[currentVertex] = currentVertex;
+    }
+
+    // Возвращает набор кратчайших расстояний до всех вершин и набор
+    // кратчайших путей ко всем вершинам графа.
+    return {
+      distances,
+      previousVertices,
+    };
+  }
+
+  public bellmanFord(startVertex: KeyType, limit: number) {
+    const distances = {};
+    const previousVertices = {};
+
+    // Инициализируем все расстояния с бесконечностью, предполагая,
+    // что в данный момент мы не можем достичь ни одной вершины, кроме начальной.
+    distances[startVertex] = 0;
+    this.getAllVertices().forEach((vertex) => {
+      previousVertices[vertex] = null;
+      if (vertex !== startVertex) {
+        distances[vertex] = Infinity;
+      }
+    });
+
+    // Нам понадобится (|V| - 1) итераций.
+    for (
+      let iteration = 0;
+      iteration < this.getAllVertices().length - 1;
+      iteration += 1
+    ) {
+      // Во время каждой итерации проходят все вершины.
+      Object.keys(distances).forEach((vertex) => {
+        // Пройдите через все ребра вершин.
+        this.vertices[vertex].forEach((neighbor) => {
+          // Выясним, меньше ли расстояние до соседа в этой
+          // итерации, чем в предыдущей.
+          const distanceToVertex = distances[vertex];
+          const distanceToNeighbor = distanceToVertex + neighbor.weight;
+          if (distanceToNeighbor < distances[neighbor.value]) {
+            distances[neighbor.value] = distanceToNeighbor;
+            previousVertices[neighbor.value] = vertex;
+          }
+        });
+      });
+    }
+
+    const perefery = {};
+    Object.entries(distances).forEach(([key, dist]) => {
+      if (Number(dist) > limit) {
+        perefery[key] = dist;
+      }
+    });
+
+    return {
+      distances,
+      previousVertices,
+      perefery,
+    };
+  }
+
+  public floydWarshall(v1: KeyType, v2: KeyType, L: number) {
+    const vertices = this.getAllVertices();
+
+    // Инициализировать матрицу предыдущих вершин с нулями, что означает отсутствие
+    // существуют предыдущие вершины, которые дадут нам кратчайший путь.
+    const nextVertices = Array(vertices.length)
+      .fill(null)
+      .map(() => {
+        return Array(vertices.length).fill(null);
+      });
+
+    //Начальная матрица расстояний с бесконечностью означает,
+    // что путей между вершинами пока не существует.
+
+    const distances = Array(vertices.length)
+      .fill(null)
+      .map(() => {
+        return Array(vertices.length).fill(Infinity);
+      });
+
+    //Инициализируем матрицу расстояний с расстоянием, которое мы уже сейчас (от существующих ребер).
+    //А также инициализировать предыдущие вершины с ребер.
+    vertices.forEach((startVertex, startIndex) => {
+      vertices.forEach((endVertex, endIndex) => {
+        if (startVertex === endVertex) {
+          distances[startIndex][endIndex] = 0;
+        } else {
+          // Найдите ребро между начальной и конечной вершинами
+          const edge = this.vertices[startVertex].find(
+            (v) => v.value === endVertex,
+          );
+
+          if (edge) {
+            // Существует ребро от вершины с startIndex до вершины с endIndex.
+            // Сохраните расстояние и предыдущую вершину.
+            distances[startIndex][endIndex] = edge.weight;
+            nextVertices[startIndex][endIndex] = startVertex;
+          } else {
+            distances[startIndex][endIndex] = Infinity;
+          }
+        }
+      });
+    });
+
+    // Теперь перейдем к сути алгоритма.
+    // Возьмем все пары вершин (от начала до конца) и попробуем проверить, есть ли там
+    // между ними существует более короткий путь через среднюю вершину. Средняя вершина также может
+    // быть одной из вершин графа. Как вы можете видеть, теперь у нас будет три
+    // циклически проходит по всем вершинам графа: для начальной, конечной и средней вершины.
+    vertices.forEach((middleVertex, middleIndex) => {
+      // Путь начинается с startVertex с помощью startIndex.
+      vertices.forEach((startVertex, startIndex) => {
+        // Путь заканчивается на endVertex с помощью endIndex.
+        vertices.forEach((endVertex, endIndex) => {
+          // Сравните существующее расстояние от startVertex до endVertex с расстоянием
+          // от startVertex до endVertex, но через middleVertex.
+          // Сохраняем кратчайшее расстояние и предыдущую вершину, которая позволяет
+          // нам нужно это кратчайшее расстояние.
+          const distViaMiddle =
+            distances[startIndex][middleIndex] +
+            distances[middleIndex][endIndex];
+
+          if (distances[startIndex][endIndex] > distViaMiddle) {
+            // Мы нашли кратчайший проход через среднюю вершину.
+            distances[startIndex][endIndex] = distViaMiddle;
+            nextVertices[startIndex][endIndex] = middleVertex;
+          }
+        });
+      });
+    });
+
+    const indexV1 = this.getAllVertices().indexOf(String(v1));
+    const indexV2 = this.getAllVertices().indexOf(String(v2));
+    const dist = distances[indexV1][indexV2];
+    const isExist = dist <= L;
+    return { distances, nextVertices, dist, isExist };
+  }
+}

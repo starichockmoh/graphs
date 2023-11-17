@@ -3,6 +3,12 @@ import JSONGraph from './graph.json';
 import JSONOrientGraph from './orientGraph.json';
 import Traversals from './traversals';
 import { tree } from './kruskal';
+import {
+  distances,
+  previousVertices,
+  bellmanFord,
+  floydWarshall,
+} from './weight';
 
 console.log(
   '//////////////////////Неориентированный граф/////////////////////////////',
@@ -107,6 +113,20 @@ console.log(Traversals.resultWidthSearch);
 
 console.log('//////////////////////Краскал/////////////////////////////');
 tree.print();
+
+console.log('//////////////////////Дейкстра/////////////////////////////');
+console.log(distances);
+console.log(previousVertices);
+
+console.log('//////////////////////Беллман-флойд/////////////////////////////');
+console.log(bellmanFord.distances);
+console.log(bellmanFord.previousVertices);
+console.log(bellmanFord.perefery);
+
+console.log('//////////////////////Флойд/////////////////////////////');
+console.log(floydWarshall.distances);
+console.log(floydWarshall.dist);
+console.log(floydWarshall.isExist);
 
 console.log(
   'Создать граф: create, создать ориентированный граф createOrient, добавить вершину: vertex, добавить ребро: edge, ' +
