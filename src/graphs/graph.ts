@@ -504,4 +504,119 @@ export default class Graph {
     const isExist = dist <= L;
     return { distances, nextVertices, dist, isExist };
   }
+
+  public getVerticesMatrix() {
+    let matrixVertices: Array<Array<Array<number>>> = [];
+    Object.keys(this.vertices).forEach((curVertex, index) => {
+      matrixVertices.push([]);
+      Object.keys(this.vertices).forEach((vertex) => {
+        const vStraight = this.vertices[curVertex].find(
+          (v) => v.value === vertex,
+        );
+        const vReturn = this.vertices[vertex].find(
+          (v) => v.value === curVertex,
+        );
+        if (curVertex === vertex) {
+          matrixVertices[index].push([0, 0, 1]);
+        } else if (vStraight) {
+          matrixVertices[index].push([vStraight.weight, 0, 1]);
+        } else if (vReturn) {
+          matrixVertices[index].push([vReturn.weight, 0, -1]);
+        } else {
+          matrixVertices[index].push([0, 0, 1]);
+        }
+      });
+    });
+    return matrixVertices;
+  }
+
+  public getMaxVertex(
+    currentVertex: number,
+    matrixVertices: Array<Array<Array<number>>>,
+    visited: Array<number>,
+  ) {
+    let max = 0; // наименьшее допустимое значение
+    let vertexResult = -1;
+    matrixVertices[currentVertex].forEach((vertex, index) => {
+      if (!visited.includes(index)) {
+        if (vertex[2] === 1) {
+          if (max < vertex[0]) {
+            max = vertex[0];
+            vertexResult = index;
+          }
+        } else {
+          if (max < vertex[1]) {
+            max = vertex[1];
+            vertexResult = index;
+          }
+        }
+      }
+    });
+    return vertexResult;
+  }
+
+  public updateMatrix(
+    matrixVertices: Array<Array<Array<number>>>,
+    routes: Array<Array<number>>,
+    stream: number,
+  ) {
+    const newMatrixVertices = matrixVertices;
+    routes.forEach((el) => {
+      if (el[1] !== -1) {
+        const sgn = newMatrixVertices[el[2]][el[1]][2];
+        newMatrixVertices[el[1]][el[2]][0] -= stream * sgn;
+        newMatrixVertices[el[1]][el[2]][1] += stream * sgn;
+        newMatrixVertices[el[2]][el[1]][0] -= stream * sgn;
+        newMatrixVertices[el[2]][el[1]][1] += stream * sgn;
+      }
+    });
+    return newMatrixVertices;
+  }
+
+  public getMaxFlow(routes: Array<Array<number>>) {
+    return routes.map((el) => el[0]).reduce((x, y) => Math.min(x, y));
+  }
+  public maxStream(init: number, end: number) {
+    let matrixVertices = this.getVerticesMatrix();
+    const routeInit = [Infinity, -1, init]; // первая метка маршрута (a, from, vertex)
+    const routeStreams: Array<number> = []; // максимальные потоки найденных маршрутов
+    let j = init;
+    while (j !== -1) {
+      let startVertex = init; // стартовая вершина (нумерация с нуля)
+      const routes = [routeInit]; // метки маршрута
+      const visited = [init]; // множество просмотренных вершин
+      while (startVertex != end) {
+        j = this.getMaxVertex(startVertex, matrixVertices, visited); // выбираем вершину с наибольшей пропускной способностью
+        // если следующих вершин нет
+        if (j === -1) {
+          if (startVertex == init) {
+            //и мы на истоке, то завершаем поиск маршрутов
+            break;
+          } else {
+            startVertex = routes.pop()[2];
+          }
+        } else {
+          let currentStream = // определяем текущий поток
+            matrixVertices[startVertex][j][2] == 1
+              ? matrixVertices[startVertex][j][0]
+              : matrixVertices[startVertex][j][1];
+
+          routes.push([currentStream, j, startVertex]); // добавляем метку маршрута
+          visited.push(j); // запоминаем вершину как просмотренную
+          // если дошди до стока
+          if (j === end) {
+            routeStreams.push(this.getMaxFlow(routes)); // находим максимальную пропускную способность маршрута
+            matrixVertices = this.updateMatrix(
+              matrixVertices,
+              routes,
+              routeStreams[routeStreams.length - 1],
+            ); // обновляем веса дуг
+            break;
+          }
+          startVertex = j;
+        }
+      }
+    }
+    return routeStreams.reduce((el, accum) => accum + el);
+  }
 }

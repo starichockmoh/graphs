@@ -282,6 +282,15 @@ var Graph = /** @class */ (function () {
         }
         return minimumSpanningTree;
     };
+    //"На пальцах" примерно так... Алгоритм основан на том, что, грубо говоря, там,
+    // где уже побывали - больше не будем. И что чем дальше идем, тем больший суммарный вес - именно поэтому нам не
+    // нужно возвращаться: ничего лучше, чем есть, уже не будет. А ребра с отрицательным весом эти правила нарушают - может
+    // оказаться, что если воспользоваться ребром с отрицательным весом и вернуться в уже просмотренную вершину, то вес пути
+    // к ней окажется меньше. Что противоречит идее в основе алгоритма. –
+    //В графе с отрицательными весами понятие пути минимального веса может быть не определено.
+    // Это не зависит от алгоритма решающего задачу. Сам граф так (может быть) устроен, что нельзя сказать про какой-то путь -
+    // "это путь минимального веса". Пока это так, никакой алгоритм не может решить задачу, так как он будет искать то чего нет.
+    // Определитесь что такое путь минимального веса в вашем примере, тогда можно будет говорить находит ли конкретный алгоритм именно его.
     Graph.prototype.dijkstra = function (startVertex) {
         // Вспомогательные переменные инициализации, которые нам понадобятся для алгоритма Дейкстры.
         var distances = {};
@@ -450,6 +459,107 @@ var Graph = /** @class */ (function () {
         var dist = distances[indexV1][indexV2];
         var isExist = dist <= L;
         return { distances: distances, nextVertices: nextVertices, dist: dist, isExist: isExist };
+    };
+    Graph.prototype.getVerticesMatrix = function () {
+        var _this = this;
+        var matrixVertices = [];
+        Object.keys(this.vertices).forEach(function (curVertex, index) {
+            matrixVertices.push([]);
+            Object.keys(_this.vertices).forEach(function (vertex) {
+                var vStraight = _this.vertices[curVertex].find(function (v) { return v.value === vertex; });
+                var vReturn = _this.vertices[vertex].find(function (v) { return v.value === curVertex; });
+                if (curVertex === vertex) {
+                    matrixVertices[index].push([0, 0, 1]);
+                }
+                else if (vStraight) {
+                    matrixVertices[index].push([vStraight.weight, 0, 1]);
+                }
+                else if (vReturn) {
+                    matrixVertices[index].push([vReturn.weight, 0, -1]);
+                }
+                else {
+                    matrixVertices[index].push([0, 0, 1]);
+                }
+            });
+        });
+        return matrixVertices;
+    };
+    Graph.prototype.getMaxVertex = function (currentVertex, matrixVertices, visited) {
+        var max = 0; // наименьшее допустимое значение
+        var vertexResult = -1;
+        matrixVertices[currentVertex].forEach(function (vertex, index) {
+            if (!visited.includes(index)) {
+                if (vertex[2] === 1) {
+                    if (max < vertex[0]) {
+                        max = vertex[0];
+                        vertexResult = index;
+                    }
+                }
+                else {
+                    if (max < vertex[1]) {
+                        max = vertex[1];
+                        vertexResult = index;
+                    }
+                }
+            }
+        });
+        return vertexResult;
+    };
+    Graph.prototype.updateMatrix = function (matrixVertices, routes, stream) {
+        var newMatrixVertices = matrixVertices;
+        routes.forEach(function (el) {
+            if (el[1] !== -1) {
+                var sgn = newMatrixVertices[el[2]][el[1]][2];
+                newMatrixVertices[el[1]][el[2]][0] -= stream * sgn;
+                newMatrixVertices[el[1]][el[2]][1] += stream * sgn;
+                newMatrixVertices[el[2]][el[1]][0] -= stream * sgn;
+                newMatrixVertices[el[2]][el[1]][1] += stream * sgn;
+            }
+        });
+        return newMatrixVertices;
+    };
+    Graph.prototype.getMaxFlow = function (routes) {
+        return routes.map(function (el) { return el[0]; }).reduce(function (x, y) { return Math.min(x, y); });
+    };
+    Graph.prototype.maxStream = function (init, end) {
+        var matrixVertices = this.getVerticesMatrix();
+        var routeInit = [Infinity, -1, init]; // первая метка маршрута (a, from, vertex)
+        var routeStreams = []; // максимальные потоки найденных маршрутов
+        var j = init;
+        while (j !== -1) {
+            var startVertex = init; // стартовая вершина (нумерация с нуля)
+            var routes = [routeInit]; // метки маршрута
+            var visited = [init]; // множество просмотренных вершин
+            while (startVertex != end) {
+                j = this.getMaxVertex(startVertex, matrixVertices, visited); // выбираем вершину с наибольшей пропускной способностью
+                // если следующих вершин нет
+                if (j === -1) {
+                    if (startVertex == init) {
+                        //и мы на истоке, то завершаем поиск маршрутов
+                        break;
+                    }
+                    else {
+                        startVertex = routes.pop()[2];
+                    }
+                }
+                else {
+                    var currentStream = // определяем текущий поток
+                     matrixVertices[startVertex][j][2] == 1
+                        ? matrixVertices[startVertex][j][0]
+                        : matrixVertices[startVertex][j][1];
+                    routes.push([currentStream, j, startVertex]); // добавляем метку маршрута
+                    visited.push(j); // запоминаем вершину как просмотренную
+                    // если дошди до стока
+                    if (j === end) {
+                        routeStreams.push(this.getMaxFlow(routes)); // находим максимальную пропускную способность маршрута
+                        matrixVertices = this.updateMatrix(matrixVertices, routes, routeStreams[routeStreams.length - 1]); // обновляем веса дуг
+                        break;
+                    }
+                    startVertex = j;
+                }
+            }
+        }
+        return routeStreams.reduce(function (el, accum) { return accum + el; });
     };
     return Graph;
 }());

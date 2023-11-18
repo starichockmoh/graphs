@@ -3,6 +3,7 @@ import JSONGraph from './graph.json';
 import JSONOrientGraph from './orientGraph.json';
 import Traversals from './traversals';
 import { tree } from './kruskal';
+import { maxStream } from './stream';
 import {
   distances,
   previousVertices,
@@ -127,6 +128,9 @@ console.log('//////////////////////Флойд/////////////////////////////');
 console.log(floydWarshall.distances);
 console.log(floydWarshall.dist);
 console.log(floydWarshall.isExist);
+
+console.log('//////////////////////Поток/////////////////////////////');
+console.log(maxStream);
 
 console.log(
   'Создать граф: create, создать ориентированный граф createOrient, добавить вершину: vertex, добавить ребро: edge, ' +

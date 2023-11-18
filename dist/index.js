@@ -8,6 +8,7 @@ var graph_json_1 = __importDefault(require("./graph.json"));
 var orientGraph_json_1 = __importDefault(require("./orientGraph.json"));
 var traversals_1 = __importDefault(require("./traversals"));
 var kruskal_1 = require("./kruskal");
+var stream_1 = require("./stream");
 var weight_1 = require("./weight");
 console.log('//////////////////////Неориентированный граф/////////////////////////////');
 var graph = new graph_1.default();
@@ -85,6 +86,8 @@ console.log('//////////////////////Флойд/////////////////////////////');
 console.log(weight_1.floydWarshall.distances);
 console.log(weight_1.floydWarshall.dist);
 console.log(weight_1.floydWarshall.isExist);
+console.log('//////////////////////Поток/////////////////////////////');
+console.log(stream_1.maxStream);
 console.log('Создать граф: create, создать ориентированный граф createOrient, добавить вершину: vertex, добавить ребро: edge, ' +
     'вывести на экран: print, write: вывести в файл, degree - вывести степень полуисходов, loops - вывести количество петель');
 var isVertex = false;
