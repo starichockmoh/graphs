@@ -1,1 +1,129 @@
-{"isOrient":true,"vertices":{"A":[{"value":"B","weight":0},{"value":"C","weight":0},{"value":"F","weight":0},{"value":"H","weight":0}],"B":[],"C":[{"value":"D","weight":0},{"value":"E","weight":0}],"D":[{"value":"C","weight":0}],"E":[],"F":[{"value":"G","weight":0}],"G":[],"H":[]}}
+{
+  "isOrient": true,
+  "vertices": {
+    "A": [
+      {
+        "value": "B",
+        "weight": 0
+      },
+      {
+        "value": "C",
+        "weight": 0
+      },
+      {
+        "value": "F",
+        "weight": 0
+      },
+      {
+        "value": "H",
+        "weight": 0
+      },
+      {
+        "value": "P",
+        "weight": 0
+      },
+      {
+        "value": "P1",
+        "weight": 0
+      },
+      {
+        "value": "F2",
+        "weight": 0
+      },
+      {
+        "value": "H2",
+        "weight": 0
+      },
+      {
+        "value": "B2",
+        "weight": 0
+      },
+      {
+        "value": "C2",
+        "weight": 0
+      },
+      {
+        "value": "F4",
+        "weight": 0
+      },
+      {
+        "value": "H4",
+        "weight": 0
+      }
+    ],
+    "B": [],
+    "C": [
+      {
+        "value": "D",
+        "weight": 0
+      },
+      {
+        "value": "E",
+        "weight": 0
+      },
+      {
+        "value": "F2",
+        "weight": 0
+      },
+      {
+        "value": "H2",
+        "weight": 0
+      },
+      {
+        "value": "B2",
+        "weight": 0
+      },
+      {
+        "value": "C2",
+        "weight": 0
+      },
+      {
+        "value": "F4",
+        "weight": 0
+      },
+      {
+        "value": "H4",
+        "weight": 0
+      }
+    ],
+    "D": [
+      {
+        "value": "C",
+        "weight": 0
+      }
+    ],
+    "E": [],
+    "F": [
+      {
+        "value": "G",
+        "weight": 0
+      },
+      {
+        "value": "F2",
+        "weight": 0
+      },
+      {
+        "value": "H2",
+        "weight": 0
+      },
+      {
+        "value": "B2",
+        "weight": 0
+      },
+      {
+        "value": "C2",
+        "weight": 0
+      },
+      {
+        "value": "F4",
+        "weight": 0
+      },
+      {
+        "value": "H4",
+        "weight": 0
+      }
+    ],
+    "G": [],
+    "H": []
+  }
+}

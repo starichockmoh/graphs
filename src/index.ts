@@ -96,7 +96,7 @@ const newGr2 = new Graph();
 newGr2.addVertex('A');
 newGr2.addVertex('B');
 newGr2.addVertex('C');
-newGr2.addEdge('A', 'C');
+newGr2.addEdge('B', 'C');
 newGr2.print();
 const newGr3 = newGr.intersection(newGr2);
 newGr3.print();

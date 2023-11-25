@@ -21,4 +21,4 @@ edges.forEach((e) => graphOrient.addEdge(e[0], e[1], e[2] as number));
 
 export const { previousVertices, distances } = graph.dijkstra('A');
 export const bellmanFord = graph.bellmanFord('A', 8);
-export const floydWarshall = graphOrient.floydWarshall('F', 'D', 10);
+export const floydWarshall = graphOrient.floydWarshall('A', 'F', 20);

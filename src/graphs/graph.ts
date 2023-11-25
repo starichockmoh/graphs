@@ -26,11 +26,6 @@ export default class Graph {
     this.isOrient = Boolean(isOrient);
   }
 
-  public copy(graph: Graph) {
-    this.isOrient = graph.isOrient;
-    this.vertices = graph.vertices;
-  }
-
   public getAllVertices() {
     return Object.keys(this.vertices);
   }
@@ -53,6 +48,11 @@ export default class Graph {
 
   public print() {
     console.log(this.vertices);
+  }
+
+  public copy(graph: Graph) {
+    this.isOrient = graph.isOrient;
+    this.vertices = graph.vertices;
   }
 
   public degreeOfOutcome(vertex: KeyType) {

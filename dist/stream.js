@@ -8,14 +8,14 @@ var graph_1 = __importDefault(require("./graphs/graph"));
 var graph = new graph_1.default(true);
 var vertices = ['1', '2', '3', '4', '5'];
 var edges = [
-    ['1', '2', 20],
-    ['1', '4', 10],
-    ['1', '3', 30],
-    ['2', '3', 40],
-    ['2', '5', 30],
-    ['3', '4', 10],
-    ['3', '5', 20],
-    ['4', '5', 20],
+    ['1', '2', 30],
+    ['1', '4', 20],
+    ['1', '3', 40],
+    ['2', '3', 50],
+    ['2', '5', 40],
+    ['3', '4', 20],
+    ['3', '5', 30],
+    ['4', '5', 30],
 ];
 vertices.forEach(function (v) { return graph.addVertex(v); });
 edges.forEach(function (e) { return graph.addEdge(e[0], e[1], e[2]); });

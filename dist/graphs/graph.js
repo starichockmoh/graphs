@@ -43,10 +43,6 @@ var Graph = /** @class */ (function () {
         this.vertices = vertices !== null && vertices !== void 0 ? vertices : {};
         this.isOrient = Boolean(isOrient);
     }
-    Graph.prototype.copy = function (graph) {
-        this.isOrient = graph.isOrient;
-        this.vertices = graph.vertices;
-    };
     Graph.prototype.getAllVertices = function () {
         return Object.keys(this.vertices);
     };
@@ -67,6 +63,10 @@ var Graph = /** @class */ (function () {
     };
     Graph.prototype.print = function () {
         console.log(this.vertices);
+    };
+    Graph.prototype.copy = function (graph) {
+        this.isOrient = graph.isOrient;
+        this.vertices = graph.vertices;
     };
     Graph.prototype.degreeOfOutcome = function (vertex) {
         if (!this.isOrient)

@@ -60,7 +60,7 @@ var newGr2 = new graph_1.default();
 newGr2.addVertex('A');
 newGr2.addVertex('B');
 newGr2.addVertex('C');
-newGr2.addEdge('A', 'C');
+newGr2.addEdge('B', 'C');
 newGr2.print();
 var newGr3 = newGr.intersection(newGr2);
 newGr3.print();

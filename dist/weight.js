@@ -26,5 +26,5 @@ edges.forEach(function (e) { return graph.addEdge(e[0], e[1], e[2]); });
 edges.forEach(function (e) { return graphOrient.addEdge(e[0], e[1], e[2]); });
 exports.previousVertices = (_a = graph.dijkstra('A'), _a.previousVertices), exports.distances = _a.distances;
 exports.bellmanFord = graph.bellmanFord('A', 8);
-exports.floydWarshall = graphOrient.floydWarshall('F', 'D', 10);
+exports.floydWarshall = graphOrient.floydWarshall('A', 'F', 20);
 //# sourceMappingURL=weight.js.map
